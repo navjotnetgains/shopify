@@ -1,0 +1,67 @@
+{% comment %}
+Photo Gallery App Block with Polaris-like styling
+
+Assumptions:
+- galleries data available
+- login-modal and upload-gallery-modal snippets created
+{% endcomment %}
+
+
+
+<div id="app-gallery" class="Polaris-Page">
+  <div class="Polaris-Card">
+    <div class="Polaris-Card__Section">
+      <button id="upload-gallery-button" class="Polaris-Button Polaris-Button--primary">
+        <span class="Polaris-Button__Content">Upload Gallery</span>
+      </button>
+    </div>
+
+    <!-- Hidden login modal container -->
+    <div id="login-modal-container" style="display:none;">
+       test modal here 
+    </div>
+
+    <!-- Hidden upload gallery modal container -->
+    <div id="upload-gallery-modal-container" style="display:none;">
+    test modal here 
+    </div>
+
+    <div class="Polaris-Card__Section">
+      <h2 class="Polaris-Text--headingMd">Approved Galleries</h2>
+
+      {% assign galleries = galleries | default: blank %}
+
+      {% if galleries.size == 0 %}
+        <p>No approved galleries found.</p>
+      {% else %}
+        {% for gallery in galleries %}
+          <div class="Polaris-Card" style="margin-bottom: 20px;">
+            <div class="Polaris-Card__Section">
+              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                {% for img in gallery.images %}
+                  <img 
+                    src="{{ img.url }}" 
+                    alt="Uploaded image {{ img.id }}"
+                    width="150"
+                    height="150"
+                    style="border-radius: 8px;"
+                  />
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{{ 'app-gallery.js' | asset_url | script_tag }}
+
+{% schema %}
+{
+  "name": "App Gallery",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}

@@ -1,0 +1,104 @@
+<div id="upload-gallery-modal-overlay" class="Polaris-Backdrop" style="display: none;">
+  <div class="Polaris-Modal-Dialog__Container">
+    <div class="Polaris-Modal-Dialog">
+      <div class="Polaris-Modal-Header">
+        <h2 class="Polaris-Modal-Header__Title">Upload Gallery</h2>
+        <button id="close-upload-gallery-modal" class="Polaris-Button Polaris-Button--plain Polaris-Modal-CloseButton">
+          <span class="Polaris-Icon Polaris-Icon--colorBase Polaris-Icon--applyColor">&times;</span>
+        </button>
+      </div>
+
+      <div class="Polaris-Modal__BodyWrapper">
+        <div class="Polaris-Modal__Body">
+          <form id="upload-gallery-form" enctype="multipart/form-data">
+            <input type="hidden" name="customerId" id="upload-customer-id" />
+            <input type="hidden" name="name" id="upload-customer-name" />
+            <input type="hidden" name="email" id="upload-customer-email" />
+
+            <div class="Polaris-FormLayout">
+              <div class="Polaris-FormLayout__Item">
+                <select
+                  name="event"
+                  id="upload-event"
+                  required
+                  class="Polaris-Select"
+                >
+                  <option value="">Select Event</option>
+                  <option value="wedding">Wedding</option>
+                  <option value="birthday">Birthday</option>
+                  <option value="corporate">Corporate</option>
+                </select>
+              </div>
+
+              <div class="Polaris-FormLayout__Item">
+                <input
+                  type="file"
+                  name="images"
+                  id="upload-gallery-images"
+                  multiple
+                  accept="image/*"
+                  class="Polaris-TextField__Input"
+                />
+              </div>
+
+              <div class="Polaris-FormLayout__Item">
+                <button
+                  type="submit"
+                  class="Polaris-Button Polaris-Button--primary"
+                >
+                  Submit
+                </button>
+              </div>
+
+              <p id="upload-gallery-message" class="Polaris-Text--success Polaris-Text--center"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const modalOverlay = document.getElementById("upload-gallery-modal-overlay");
+  const closeModalBtn = document.getElementById("close-upload-gallery-modal");
+  const form = document.getElementById("upload-gallery-form");
+  const message = document.getElementById("upload-gallery-message");
+
+  closeModalBtn.addEventListener("click", function() {
+    modalOverlay.style.display = "none";
+  });
+
+  form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    message.textContent = "";
+
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch("/apps/upload-gallery", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        message.textContent = json.message || "Your request is in process.";
+        message.classList.add("Polaris-Text--success");
+        form.reset();
+        setTimeout(() => {
+          modalOverlay.style.display = "none";
+        }, 2000);
+      } else {
+        message.textContent = json.error || "Something went wrong.";
+        message.classList.add("Polaris-Text--critical");
+      }
+    } catch (error) {
+      message.textContent = "An error occurred. Please try again.";
+      message.classList.add("Polaris-Text--critical");
+    }
+  });
+});
+</script>

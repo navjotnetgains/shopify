@@ -3,7 +3,7 @@
 client_id = "4e1fbe99fba5bf48f094895616d6f622"
 name = "photo gallery app "
 handle = "photo-gallery-app-1"
-application_url = "https://distances-bee-uniprotkb-lb.trycloudflare.com"
+application_url = "https://ro-soon-henderson-velocity.trycloudflare.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-04"
 scopes = "write_products,read_customers, unauthenticated_read_customers,unauthenticated_write_customers"
 
 [auth]
-redirect_urls = ["https://distances-bee-uniprotkb-lb.trycloudflare.com/auth/callback", "https://distances-bee-uniprotkb-lb.trycloudflare.com/auth/shopify/callback", "https://distances-bee-uniprotkb-lb.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://ro-soon-henderson-velocity.trycloudflare.com/auth/callback", "https://ro-soon-henderson-velocity.trycloudflare.com/auth/shopify/callback", "https://ro-soon-henderson-velocity.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false
