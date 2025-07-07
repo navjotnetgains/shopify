@@ -1,18 +1,16 @@
 {% comment %}
-Photo Gallery App Block with Polaris-like styling
-
-Assumptions:
-- galleries data available
-- login-modal and upload-gallery-modal snippets created
+Photo Gallery App Block with Polaris-like styling and smaller fonts
 {% endcomment %}
 
-
-
-<div id="app-gallery" class="Polaris-Page">
-  <div class="Polaris-Card">
-    <div class="Polaris-Card__Section">
-      <button id="upload-gallery-button" class="Polaris-Button Polaris-Button--primary">
-        <span class="Polaris-Button__Content">Upload Gallery</span>
+<div id="app-gallery" class="Polaris-Page" style="padding:40px; font-size:14px; line-height:1.4;">
+  <div class="Polaris-Card" style="padding:20px;">
+    <div class="Polaris-Card__Section" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+      <div style="max-width:400px;">
+        <h1 class="Polaris-Text--headingXl" style="margin-bottom:10px; font-size:25px;">Get Featured in Our Event Gallery!</h1>
+        <p style="font-size:13px;">Upload your event images featuring Zion Cases, and get a chance to be showcased on our website.</p>
+      </div>
+      <button id="upload-gallery-button" class="Polaris-Button Polaris-Button--primary" style="background:#ff4d4f; color:white; padding:10px 16px; border-radius:6px; font-weight:bold; font-size:13px;">
+        Upload Gallery
       </button>
     </div>
 
@@ -26,32 +24,11 @@ Assumptions:
       {% render 'upload-gallery-modal' %}
     </div>
 
-    <div class="Polaris-Card__Section">
-      <h2 class="Polaris-Text--headingMd">Approved Galleries</h2>
+    <div class="Polaris-Card__Section" style="margin-top:30px;">
+      <h2 class="Polaris-Text--headingMd" style="margin-bottom:20px; font-size:16px;">Approved Galleries</h2>
+      <div id="approved-galleries-container" style="display:flex; flex-wrap:wrap; gap:15px;">
 
-      {% assign galleries = galleries | default: blank %}
-
-      {% if galleries.size == 0 %}
-        <p>No approved galleries found.</p>
-      {% else %}
-        {% for gallery in galleries %}
-          <div class="Polaris-Card" style="margin-bottom: 20px;">
-            <div class="Polaris-Card__Section">
-              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                {% for img in gallery.images %}
-                  <img 
-                    src="{{ img.url }}" 
-                    alt="Uploaded image {{ img.id }}"
-                    width="150"
-                    height="150"
-                    style="border-radius: 8px;"
-                  />
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      {% endif %}
+      </div>
     </div>
   </div>
 </div>

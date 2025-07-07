@@ -1,5 +1,6 @@
 import { useLoaderData, Form } from '@remix-run/react';
 import { json } from '@remix-run/node';
+import { Page, DataTable, Thumbnail, Button } from '@shopify/polaris';
 import db from '../db.server';
 
 export async function loader() {
@@ -14,6 +15,10 @@ export async function action({ request }) {
   const id = formData.get("id");
   const status = formData.get("status");
 
+  if (!id || !status) {
+    return json({ success: false, error: "Missing id or status" }, { status: 400 });
+  }
+
   await db.galleryUpload.update({
     where: { id },
     data: { status },
@@ -25,47 +30,59 @@ export async function action({ request }) {
 export default function AdminImages() {
   const { galleries } = useLoaderData();
 
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Admin Gallery Approvals</h1>
-
-      {galleries.map((gallery) => (
-        <div key={gallery.id} className="border p-4 mb-6 rounded-xl shadow">
-          <p><strong>Customer ID:</strong> {gallery.customerId}</p>
-          <p><strong>Name:</strong> {gallery.name}</p>
-          <p><strong>Email:</strong> {gallery.email}</p>
-          <p><strong>Event:</strong> {gallery.event}</p>
-          <p><strong>Status:</strong> {gallery.status}</p>
-
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            {gallery.images.map((image) => (
-              <div key={image.id} className="border p-2 rounded">
-                <img src={image.url} alt="uploaded" width="100" className="mb-2"/>
-              </div>
-            ))}
-          </div>
-
-          <Form method="POST" className="mt-4">
-            <input type="hidden" name="id" value={gallery.id} />
-            <button
-              type="submit"
-              name="status"
-              value="approved"
-              className="bg-green-600 text-white px-3 py-1 rounded mr-2"
-            >
-              Approve Gallery
-            </button>
-            <button
-              type="submit"
-              name="status"
-              value="declined"
-              className="bg-red-600 text-white px-3 py-1 rounded"
-            >
-              Decline Gallery
-            </button>
-          </Form>
-        </div>
+  const rows = galleries.map((gallery) => [
+    gallery.customerId.split('/').pop(),
+    gallery.event,
+    gallery.status,
+    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+      {gallery.images.map((image) => (
+        <Thumbnail
+          key={image.id}
+          source={image.url}
+          alt="uploaded"
+          size="small"
+        />
       ))}
-    </div>
+    </div>,
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <Form method="POST">
+        <input type="hidden" name="id" value={gallery.id} />
+        <input type="hidden" name="status" value="approved" />
+        <Button submit primary>
+          Approve
+        </Button>
+      </Form>
+      <Form method="POST">
+        <input type="hidden" name="id" value={gallery.id} />
+        <input type="hidden" name="status" value="declined" />
+        <Button submit destructive>
+          Decline
+        </Button>
+      </Form>
+    </div>,
+  ]);
+
+  return (
+    <Page title="Admin Gallery Approvals">
+      <DataTable
+        columnContentTypes={[
+          'text',
+          'text',
+          'text',
+          'text',
+          'text',
+          'text',
+          'text',
+        ]}
+        headings={[
+          'Customer ID',
+          'Event',
+          'Status',
+          'Images',
+          'Actions',
+        ]}
+        rows={rows}
+      />
+    </Page>
   );
 }

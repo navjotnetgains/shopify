@@ -22,9 +22,7 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        <Link to="/app/gallery">gallery page</Link>
-        <Link to="/app/upload-gallery">upload gallery</Link>
-        <Link to="/auth/login">upload gallery</Link>
+        <Link to="/app/admin">gallery page</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
