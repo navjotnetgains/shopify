@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
+  const loginModalContainer = document.getElementById("login-modal-container");
   const loginModalOverlay = document.getElementById("login-modal-overlay");
   const closeModalBtn = document.getElementById("close-login-modal");
   const loginSubmitBtn = document.getElementById("login-submit");
@@ -7,11 +8,21 @@ document.addEventListener("DOMContentLoaded", function() {
   const loginError = document.getElementById("login-error");
   const loginSuccess = document.getElementById("login-success");
 
-  closeModalBtn.addEventListener("click", function() {
-    loginModalOverlay.style.display = "none";
-  });
+  if (loginModalContainer) {
+    document.body.appendChild(loginModalContainer);
+  }
 
-  loginSubmitBtn.addEventListener("click", async function() {
+  // ✅ Close both container and overlay
+  function closeLoginModal() {
+    if (loginModalOverlay) loginModalOverlay.style.display = "none";
+    if (loginModalContainer) loginModalContainer.style.display = "none";
+  }
+
+  // Close button event
+  closeModalBtn?.addEventListener("click", closeLoginModal);
+
+  // Login submit event
+  loginSubmitBtn?.addEventListener("click", async function() {
     const email = loginEmailInput.value;
     const password = loginPasswordInput.value;
 
@@ -62,10 +73,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const token = data.customerAccessToken.accessToken;
         localStorage.setItem("customertoken", token);
         loginSuccess.style.display = "block";
-        loginModalOverlay.style.display = "none";
 
-        const loginEvent = new CustomEvent("loginSuccess");
-        document.dispatchEvent(loginEvent);
+        // ✅ Close modal after 1 second on success
+        setTimeout(() => {
+          closeLoginModal();
+
+          const loginEvent = new CustomEvent("loginSuccess");
+          document.dispatchEvent(loginEvent);
+        }, 1000);
       }
     } catch (error) {
       loginError.textContent = "An error occurred. Please try again.";

@@ -1,20 +1,58 @@
 import { cors } from "remix-utils/cors";
 import { json } from "@remix-run/node";
-  import { v4 as uuidv4 } from "uuid";
-  import path from "path";
-  import fs from "fs/promises";
-  import db from "../db.server";
+import { v4 as uuidv4 } from "uuid";
+import path from "path";
+import fs from "fs/promises";
+import db from "../db.server";
+
+// ✅ Loader with CORS
+export const loader = async ({ request }) => {
+  try {
+    const pastEvents = await db.event.findMany({
+      where: {
+        date: {
+          lt: new Date(), 
+        },
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const response = json({ success: true, events: pastEvents });
+    return await cors(
+      request,
+      response,
+      {
+        origin: "*",
+        methods: ["GET"],
+        allowedHeaders: ["Content-Type"]
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching past events:", error);
+    return await cors(
+      request,
+      json({ success: false, error: "Server error" }, { status: 500 }),
+      {
+        origin: "*",
+        methods: ["GET"],
+        allowedHeaders: ["Content-Type"]
+      }
+    );
+  }
+};
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
   const customerId = formData.get("customerId");
   const name = formData.get("name");
   const email = formData.get("email");
-  const event = formData.get("event");
+  const eventId = formData.get("eventId");
   const files = formData.getAll("images");
 
-  // Validate input
-  if (!customerId || !email || !event || files.length === 0) {
+  // ✅ Validate input
+  if (!customerId || !email || !eventId || files.length === 0) {
     return await cors(
       request,
       json({ success: false, error: "Missing required fields or files." }, { status: 400 }),
@@ -27,19 +65,21 @@ export const action = async ({ request }) => {
   }
 
   try {
-    // Create gallery record
+    // ✅ Create gallery record
     const newGallery = await db.galleryUpload.create({
       data: {
         id: uuidv4(),
         customerId,
         name,
         email,
-        event,
+        eventId,
         status: "pending",
       },
     });
 
-    // Save each uploaded image
+    console.log("✅ New gallery created:", newGallery);
+
+    // ✅ Save each uploaded image
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const fileName = `${Date.now()}-${file.name}`;
@@ -69,6 +109,7 @@ export const action = async ({ request }) => {
         allowedHeaders: ["Content-Type"]
       }
     );
+
   } catch (error) {
     console.error("Upload gallery error:", error);
     return await cors(

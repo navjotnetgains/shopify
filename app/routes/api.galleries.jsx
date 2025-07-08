@@ -4,16 +4,22 @@ import db from '../db.server';
 
 export async function loader({ request }) {
   try {
-    const galleries = await db.galleryUpload.findMany({
+    const events = await db.event.findMany(); // all events
+    const images = await db.image.findMany({
       where: { status: "approved" },
-      include: { images: true },
+      include: {
+        gallery: {
+          include: {
+            event: true,
+          },
+        },
+      },
     });
 
     return await cors(
       request,
-      json({ galleries }),
+      json({ images, events }),
       {
-        // Allow requests from your Shopify store and local development
         origin: [
           "https://netgains28.myshopify.com",
           "http://localhost:*",
@@ -21,7 +27,7 @@ export async function loader({ request }) {
         ],
         methods: ["GET"],
         allowedHeaders: ["Content-Type"],
-        maxAge: 600 // Cache CORS preflight for 10 minutes
+        maxAge: 600
       }
     );
   } catch (error) {

@@ -30,23 +30,32 @@ model Session {
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
 }
-
-
 model GalleryUpload {
-  id          String   @id @default(uuid())
-  customerId  String
-  name        String
-  email       String
-  event       String
-  status      String   @default("pending") // pending, approved, declined
-  images      Image[]  @relation("GalleryImages")
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  customerId String
+  name       String
+  email      String
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id])
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  images     Image[]   
 }
 
 model Image {
-  id          String   @id @default(uuid())
-  url         String
-  galleryId   String
-  gallery     GalleryUpload @relation("GalleryImages", fields: [galleryId], references: [id])
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  url       String
+  galleryId String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  gallery GalleryUpload @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id            String          @id @default(uuid())
+  name          String
+  date          DateTime
+  createdAt     DateTime        @default(now())
+  GalleryUpload GalleryUpload[]
 }
