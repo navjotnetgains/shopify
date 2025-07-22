@@ -1,16 +1,30 @@
 import { useLoaderData, useFetcher } from '@remix-run/react';
 import { json } from '@remix-run/node';
-import { Page, DataTable, Thumbnail, Button, Badge, Modal, TextContainer } from '@shopify/polaris';
-import { useState } from 'react';
+import {
+  Page,
+  DataTable,
+  Thumbnail,
+  Button,
+  Badge,
+  Modal,
+  TextContainer,
+  Icon,
+  TextField,
+} from '@shopify/polaris';
+import { useState, useMemo } from 'react';
+import {
+  CheckIcon,
+  XIcon,
+  DeleteIcon,
+  ViewIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+} from '@shopify/polaris-icons';
 import db from '../db.server';
-import { LegacyStack } from '@shopify/polaris';
 
 export async function loader() {
   const galleries = await db.galleryUpload.findMany({
-    include: {
-      images: true,
-      event: true,
-    },
+    include: { images: true, event: true },
   });
   return json({ galleries });
 }
@@ -29,19 +43,13 @@ export async function action({ request }) {
   }
 
   if (!id || !status || !type) {
-    return json({ success: false, error: "Missing id, status, or type" }, { status: 400 });
+    return json({ success: false, error: "Missing data" }, { status: 400 });
   }
 
   if (type === "gallery") {
-    await db.galleryUpload.update({
-      where: { id },
-      data: { status },
-    });
+    await db.galleryUpload.update({ where: { id }, data: { status } });
   } else if (type === "image") {
-    await db.image.update({
-      where: { id },
-      data: { status },
-    });
+    await db.image.update({ where: { id }, data: { status } });
   }
 
   return json({ success: true });
@@ -51,76 +59,122 @@ export default function AdminImages() {
   const { galleries } = useLoaderData();
   const [activeGallery, setActiveGallery] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
   const fetcher = useFetcher();
+
+  const filteredGalleries = useMemo(() => {
+    if (!searchTerm) return galleries;
+    
+    return galleries.filter(gallery => {
+      const customerId = gallery.customerId.split('/').pop().toLowerCase();
+      const eventName = gallery.event?.name?.toLowerCase() || '';
+      const searchLower = searchTerm.toLowerCase();
+      
+      return customerId.includes(searchLower) || 
+             eventName.includes(searchLower);
+    });
+  }, [galleries, searchTerm]);
 
   const openModal = (gallery, index) => {
     setActiveGallery(gallery);
     setActiveImageIndex(index);
   };
 
-  const rows = galleries.map((gallery) => {
+  const rows = filteredGalleries.map((gallery, index) => {
     const firstTwoImages = gallery.images.slice(0, 2);
     const remainingCount = gallery.images.length - 2;
 
     return [
+      index + 1, // Serial number
       gallery.customerId.split('/').pop(),
-      gallery.event ? gallery.event.name : "N/A",
-      <Badge status={
-        gallery.status === "approved" ? "success"
-        : gallery.status === "declined" ? "critical"
-        : "attention"
-      }>
-        {gallery.status}
-      </Badge>,
-      <LegacyStack spacing="tight" wrap>
+      gallery.event ? gallery.event.name :  gallery.itemName ||  "N/A",
+
+      <div style={{ textAlign: 'center' }}>
+        <Badge
+          tone={
+            gallery.status === "approved" ? "success" :
+            gallery.status === "declined" ? "critical" :
+            "warning"
+          }
+        >
+          {gallery.status}
+        </Badge>
+      </div>,
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
         {firstTwoImages.map((img, index) => (
-          <div key={img.id} style={{ textAlign: 'center' }}>
+          <div key={img.id} style={{ position: 'relative' }}>
             <Thumbnail source={img.url} alt="uploaded" size="small" />
-            <div style={{ marginTop: '4px' }}>
-              <Button size="slim" onClick={() => openModal(gallery, index)}>View</Button>
-            </div>
+            <button
+              style={{
+                position: 'absolute',
+                top: '4px',
+                right: '4px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'transparent'
+              }}
+              onClick={() => openModal(gallery, index)}
+              title="View"
+            >
+              <Icon source={ViewIcon} color="base" />
+            </button>
           </div>
         ))}
         {remainingCount > 0 && (
-          <Button onClick={() => openModal(gallery, 2)}>
+          <span 
+            onClick={() => openModal(gallery, 2)}
+            style={{
+              color: 'var(--p-color-text-subdued)',
+              cursor: 'pointer',
+              marginLeft: '4px',
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
             +{remainingCount} more...
-          </Button>
+          </span>
         )}
-      </LegacyStack>,
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      </div>,
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', alignItems: 'center' }}>
         <fetcher.Form method="POST">
           <input type="hidden" name="type" value="gallery" />
           <input type="hidden" name="id" value={gallery.id} />
           <input type="hidden" name="status" value="approved" />
-          <Button submit primary>Approve</Button>
+          <button type="submit" style={{ background: '', border: 'none', cursor: 'pointer', borderRadius: '50%', padding: '1px' }} title="Approve">
+            <Icon source={CheckIcon} color="success" />
+          </button>
         </fetcher.Form>
+
         <fetcher.Form method="POST">
           <input type="hidden" name="type" value="gallery" />
           <input type="hidden" name="id" value={gallery.id} />
           <input type="hidden" name="status" value="declined" />
-          <Button submit destructive>Decline</Button>
+          <button type="submit" style={{ background: '', border: 'none', cursor: 'pointer', borderRadius: '50%', padding: '1px' }} title="Decline">
+            <Icon source={XIcon} color="critical" />
+          </button>
         </fetcher.Form>
+
         <fetcher.Form method="POST">
           <input type="hidden" name="actionType" value="delete" />
           <input type="hidden" name="id" value={gallery.id} />
-          <Button submit destructive>Delete</Button>
+          <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Delete">
+            <Icon source={DeleteIcon} color="critical" />
+          </button>
         </fetcher.Form>
       </div>,
     ];
   });
 
   const handleApproveImage = (imageId) => {
-    fetcher.submit(
-      { type: 'image', id: imageId, status: 'approved' },
-      { method: 'POST' }
-    );
+    fetcher.submit({ type: 'image', id: imageId, status: 'approved' }, { method: 'POST' });
   };
 
   const handleDeclineImage = (imageId) => {
-    fetcher.submit(
-      { type: 'image', id: imageId, status: 'declined' },
-      { method: 'POST' }
-    );
+    fetcher.submit({ type: 'image', id: imageId, status: 'declined' }, { method: 'POST' });
   };
 
   const nextImage = () => {
@@ -139,56 +193,129 @@ export default function AdminImages() {
 
   return (
     <Page title="Admin Gallery Approvals">
-      <DataTable
-        columnContentTypes={['text', 'text', 'text', 'text', 'text']}
-        headings={['Customer ID', 'Event', 'Gallery Status', 'Images', 'Actions']}
-        rows={rows}
-      />
+      <style>{`
+        .Polaris-DataTable__Table thead tr th {
+          font-weight: bold !important;
+          font-size: 14px !important;
+        }
+        .Polaris-DataTable__Table th:nth-child(4),
+        .Polaris-DataTable__Table th:nth-child(5),
+        .Polaris-DataTable__Table td:nth-child(4),
+        .Polaris-DataTable__Table td:nth-child(5) {
+          text-align: center !important;
+        }
+        .search-container {
+          margin-bottom: 20px;
+          max-width: 400px;
+        }
+      `}</style>
+
+      <div className="search-container">
+        <TextField
+          label="Search galleries"
+          labelHidden
+          placeholder="Search by customer ID or  name..."
+          value={searchTerm}
+          onChange={(value) => setSearchTerm(value)}
+          autoComplete="off"
+          clearButton
+          onClearButtonClick={() => setSearchTerm('')}
+        />
+      </div>
+
+   {filteredGalleries.length === 0 ? (
+  <div style={{ textAlign: 'center', padding: '40px' }}>
+    <img
+      src="/images/camera.png" 
+      alt="No galleries"
+      style={{ width: '150px', marginBottom: '20px' }}
+    />
+    <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '10px' }}>
+      No galleries found
+    </h2>
+    <p style={{ color: '#6b7280' }}>
+      There are currently no gallery uploads to review.
+    </p>
+  </div>
+) : (
+  <DataTable
+    columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
+    headings={['#', 'Customer ID', 'Name', 'Gallery Status', 'Images', 'Actions']}
+    rows={rows}
+  />
+)}
+
 
       {currentImage && (
         <Modal
           open
           onClose={() => setActiveGallery(null)}
-          title="Image Details"
-          primaryAction={{
-            content: 'Approve',
-            onAction: () => handleApproveImage(currentImage.id),
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span>Image Details</span>
+              {activeGallery.images.length > 1 && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    plain
+                    icon={ArrowLeftIcon}
+                    onClick={prevImage}
+                    disabled={activeImageIndex === 0}
+                  />
+                  <Button
+                    plain
+                    icon={ArrowRightIcon}
+                    onClick={nextImage}
+                    disabled={activeImageIndex === activeGallery.images.length - 1}
+                  />
+                </div>
+              )}
+            </div>
+          }
+          large
+          primaryAction={{ 
+            content: 'Approve', 
+            onAction: () => handleApproveImage(currentImage.id) 
           }}
           secondaryActions={[
-            {
-              content: 'Decline',
-              destructive: true,
+            { 
+              content: 'Decline', 
+              destructive: true, 
               onAction: () => handleDeclineImage(currentImage.id),
             },
+            {
+              content: (
+                <Badge
+                  tone={
+                    currentImage.status === "approved" ? "success" :
+                    currentImage.status === "declined" ? "critical" :
+                    "warning"
+                  }
+                >
+                  {currentImage.status}
+                </Badge>
+              ),
+              disabled: true
+            }
           ]}
         >
-          <Modal.Section>
-            <TextContainer>
-              <div style={{ textAlign: 'center' }}>
-                <img
-                  src={currentImage.url}
-                  alt="Full size"
-                  style={{ maxWidth: '100%', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}
-                />
-                <div style={{ marginTop: '12px' }}>
-                  <Badge status={
-                    currentImage.status === "approved" ? "success"
-                    : currentImage.status === "declined" ? "critical"
-                    : "attention"
-                  }>
-                    {currentImage.status}
-                  </Badge>
+          <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px' }}>
+            <Modal.Section>
+              <TextContainer>
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <img
+                    src={currentImage.url}
+                    alt="Full size"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '600px',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                    }}
+                  />
                 </div>
-
-                {activeGallery.images.length > 1 && (
-                  <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
-                    <Button onClick={prevImage} disabled={activeImageIndex === 0}>Previous</Button>
-                    <Button onClick={nextImage} disabled={activeImageIndex === activeGallery.images.length - 1}>Next</Button>
-                  </div>
-                )}
-              </div>
-            </TextContainer>
-          </Modal.Section>
+              </TextContainer>
+            </Modal.Section>
+          </div>
         </Modal>
       )}
     </Page>

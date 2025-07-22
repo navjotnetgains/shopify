@@ -6,34 +6,17 @@ document.addEventListener("DOMContentLoaded", function() {
   const form = document.getElementById("upload-gallery-form");
   const message = document.getElementById("upload-gallery-message");
   const loginModalContainer = document.getElementById("login-modal-container");
+  const typeSelect = document.getElementById("upload-type");
+  const eventSelect = document.getElementById("upload-event");
+
+  let allItems = [];
 
   if (modalOverlay) {
     document.body.appendChild(modalOverlay);
   }
-async function waitForTokenAndPopulate() {
-  let token = localStorage.getItem("customertoken");
-  const maxAttempts = 10;
-  let attempts = 0;
 
-  while (!token && attempts < maxAttempts) {
-    await new Promise(res => setTimeout(res, 500));
-    token = localStorage.getItem("customertoken");
-    attempts++;
-  }
-
-  if (token) {
-    console.log("Token detected by polling. Populating customer fields.");
-    populateCustomerFieldsFromToken();
-  } else {
-    console.warn("Token not found after polling.");
-  }
-}
-
-waitForTokenAndPopulate();
-
-
-  
-  fetchPastEvents();
+  waitForTokenAndPopulate();
+  fetchAllItems();
 
   function closeUploadModal() {
     if (modalOverlay) modalOverlay.style.display = "none";
@@ -60,7 +43,7 @@ waitForTokenAndPopulate();
     const formData = new FormData(form);
 
     try {
-      const res = await fetch("https://vacations-connect-capital-knit.trycloudflare.com/api/gallery", {
+      const res = await fetch("https://marco-fonts-childrens-uses.trycloudflare.com/api/gallery", {
         method: "POST",
         body: formData,
       });
@@ -85,84 +68,122 @@ waitForTokenAndPopulate();
       message.classList.add("Polaris-Text--critical");
     }
   });
-});
 
-async function populateCustomerFieldsFromToken() {
-  let token = localStorage.getItem("customertoken");
-  const maxAttempts = 10;
-  let attempts = 0;
+  async function waitForTokenAndPopulate() {
+    let token = localStorage.getItem("customertoken");
+    const maxAttempts = 10;
+    let attempts = 0;
 
-  while (!token && attempts < maxAttempts) {
-    await new Promise(res => setTimeout(res, 200));
-    token = localStorage.getItem("customertoken");
-    attempts++;
+    while (!token && attempts < maxAttempts) {
+      await new Promise(res => setTimeout(res, 500));
+      token = localStorage.getItem("customertoken");
+      attempts++;
+    }
+
+    if (token) {
+      console.log("Token detected by polling. Populating customer fields.");
+      populateCustomerFieldsFromToken();
+    } else {
+      console.warn("Token not found after polling.");
+    }
   }
 
-  if (!token) {
-    console.error("No customer token found after polling.");
-    return;
-  }
-
-  const query = `
-    {
-      customer(customerAccessToken: "${token}") {
-        id
-        firstName
-        lastName
-        email
+  async function populateCustomerFieldsFromToken() {
+    let token = localStorage.getItem("customertoken");
+    const query = `
+      {
+        customer(customerAccessToken: "${token}") {
+          id
+          firstName
+          lastName
+          email
+        }
       }
-    }
-  `;
+    `;
 
-  try {
-    const res = await fetch("https://netgains28.myshopify.com/api/2025-04/graphql.json", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Storefront-Access-Token": "e667bc10b211d8bc9d30c62d919ba267",
-      },
-      body: JSON.stringify({ query }),
+    try {
+      const res = await fetch("https://netgains28.myshopify.com/api/2025-04/graphql.json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Storefront-Access-Token": "e667bc10b211d8bc9d30c62d919ba267",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const json = await res.json();
+
+      if (json.data && json.data.customer) {
+        const customer = json.data.customer;
+        document.getElementById("upload-customer-id").value = customer.id;
+        document.getElementById("upload-customer-name").value = `${customer.firstName} ${customer.lastName}`;
+        document.getElementById("upload-customer-email").value = customer.email;
+
+        console.log("✅ Customer fields populated:", customer);
+      } else {
+        console.error("Customer not found or invalid token", json);
+      }
+    } catch (error) {
+      console.error("Error fetching customer details", error);
+    }
+  }
+
+  async function fetchAllItems() {
+    try {
+      const res = await fetch("https://marco-fonts-childrens-uses.trycloudflare.com/api/gallery");
+      const json = await res.json();
+
+      if (!json.success) {
+        console.error("API failed:", json);
+        return;
+      }
+
+      if (json.disabled) {
+        // When button disabled → store all products, blogs, collections, pages
+        allItems = [
+          ...json.products.map(p => ({ id: p.id, name: p.title, type: "product" })),
+          ...json.blogs.flatMap(b =>
+            b.articles.map(a => ({ id: a.id, name: `${b.title} - ${a.title}`, type: "article" }))
+          ),
+          ...json.collections.map(c => ({ id: c.id, name: c.title, type: "collection" })),
+          ...json.pages.map(p => ({ id: p.id, name: p.title, type: "page" })),
+        ];
+      } else {
+        // When button enabled → only events
+        allItems = json.events.map(ev => ({
+          id: ev.id,
+          name: ev.name,
+          date: ev.date,
+          type: ev.type,
+        }));
+      }
+
+      console.log("✅ Loaded items:", allItems);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    }
+  }
+
+  typeSelect?.addEventListener("change", function() {
+    const selectedType = this.value;
+
+    if (!selectedType) {
+      eventSelect.innerHTML = '<option value="">Select</option>';
+      return;
+    }
+
+    const filtered = allItems.filter(item => item.type === selectedType);
+    populateEventDropdown(filtered);
+  });
+
+  function populateEventDropdown(items) {
+    eventSelect.innerHTML = '<option value="">Select</option>';
+
+    items.forEach(item => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.name + (item.date ? ` (${new Date(item.date).toLocaleDateString()})` : "");
+      eventSelect.appendChild(option);
     });
-
-    const json = await res.json();
-
-    if (json.data && json.data.customer) {
-      const customer = json.data.customer;
-      document.getElementById("upload-customer-id").value = customer.id;
-      document.getElementById("upload-customer-name").value = `${customer.firstName} ${customer.lastName}`;
-      document.getElementById("upload-customer-email").value = customer.email;
-
-      console.log("✅ Customer fields populated:", customer);
-    } else {
-      console.error("Customer not found or invalid token", json);
-    }
-  } catch (error) {
-    console.error("Error fetching customer details", error);
   }
-}
-
-async function fetchPastEvents() {
-  try {
-    const res = await fetch("https://vacations-connect-capital-knit.trycloudflare.com/api/gallery");
-    const json = await res.json();
-
-    if (json.success && json.events.length > 0) {
-      const select = document.getElementById("upload-event");
-      select.innerHTML = '<option value="">Select Event</option>';
-
-      const now = new Date();
-      json.events
-        .filter(event => new Date(event.date) < now)
-        .forEach(event => {
-          const option = document.createElement("option");
-          option.value = event.id;
-          option.textContent = `${event.name} (${new Date(event.date).toLocaleDateString()})`;
-          select.appendChild(option);
-        });
-    } else {
-      console.warn("No past events found.");
-    }
-  } catch (error) {
-    console.error("Error fetching past events:", error);
-  }
-}
+});

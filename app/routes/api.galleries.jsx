@@ -23,7 +23,6 @@ export async function loader({ request }) {
         origin: [
           "https://netgains28.myshopify.com",
           "http://localhost:*",
-          "https://operational-trivia-aluminum-attitudes.trycloudflare.com"
         ],
         methods: ["GET"],
         allowedHeaders: ["Content-Type"],

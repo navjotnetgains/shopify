@@ -1,0 +1,98 @@
+{% comment %}
+Product Gallery Block - Multi-Purpose
+{% endcomment %}
+
+<div id="content-gallery-block" style="padding:20px;">
+  <div id="gallery-images" style="
+    margin-top:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  ">
+    <div style="width:100%; text-align:center; padding:20px;">Loading images...</div>
+  </div>
+  
+  <div id="gallery-error" style="color:red; margin-top:10px; display:none;"></div>
+</div>
+
+<script>
+  window.contentId = "{{ product.id | default: collection.id | default: article.id | default: page.id }}";
+  window.contentType = "{{ block.settings.gallery_type | default: 'product' }}";
+
+  // Load gallery automatically when page loads
+  document.addEventListener('DOMContentLoaded', async () => {
+    const galleryDiv = document.getElementById("gallery-images");
+    const errorDiv = document.getElementById("gallery-error");
+
+    // Clear previous state
+    galleryDiv.innerHTML = "";
+    errorDiv.style.display = "none";
+
+    // Show loading state
+    galleryDiv.innerHTML = `<div style="width:100%; text-align:center; padding:20px;">Loading images...</div>`;
+
+    try {
+      const apiUrl = `https://holder-fm-driver-represent.trycloudflare.com/api/gallery-show?contentId=${window.contentId}&contentType=${window.contentType}`;
+
+      const response = await fetch(apiUrl, {
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.approved || !data.images?.length) {
+        throw new Error(data.message || "No approved images available");
+      }
+
+      // Display images with proper URL handling
+      galleryDiv.innerHTML = data.images.map(img => `
+        <div style="width:calc(33% - 10px); min-width:150px;">
+          <img 
+            src="${img.url.startsWith('/') ? 'https://holder-fm-driver-represent.trycloudflare.com' + img.url : img.url}" 
+            alt="${img.alt || 'Gallery image'}" 
+            style="width:100%; height:auto; border-radius:4px; object-fit: cover; aspect-ratio: 1/1;"
+            loading="lazy"
+          >
+        </div>
+      `).join('');
+
+    } catch (error) {
+      console.error("Gallery error:", error);
+      galleryDiv.style.display = "none";
+      errorDiv.style.display = "block";
+      errorDiv.innerHTML = `
+        Failed to load gallery: ${error.message}
+        <button onclick="window.location.reload()" style="margin-left:10px; padding:2px 8px;">Retry</button>
+      `;
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Content Gallery",
+  "target": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "gallery_type",
+      "label": "Select Content Type",
+      "options": [
+        { "value": "product", "label": "Product" },
+        { "value": "collection", "label": "Collection" },
+        { "value": "article", "label": "Blog Article" },
+        { "value": "page", "label": "Page" }
+      ],
+      "default": "product"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product", "collection", "article", "page"]
+  }
+}
+{% endschema %}

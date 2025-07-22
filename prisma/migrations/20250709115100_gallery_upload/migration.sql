@@ -24,6 +24,10 @@ CREATE TABLE "Image" (
 CREATE TABLE "Event" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "date" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "type" TEXT NOT NULL,
+    "shopifyId" TEXT,
+    "description" TEXT,
+    "date" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "imageUrl" TEXT
 );

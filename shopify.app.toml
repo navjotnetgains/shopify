@@ -3,7 +3,7 @@
 client_id = "4e1fbe99fba5bf48f094895616d6f622"
 name = "photo gallery app "
 handle = "photo-gallery-app-1"
-application_url = "https://vacations-connect-capital-knit.trycloudflare.com"
+application_url = "https://marco-fonts-childrens-uses.trycloudflare.com"
 embedded = true
 
 [build]
@@ -23,10 +23,24 @@ api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,read_customers, unauthenticated_read_customers,unauthenticated_write_customers"
+scopes = "write_products,read_customers, unauthenticated_read_customers,unauthenticated_write_customers,read_themes,write_themes"
 
 [auth]
-redirect_urls = ["https://vacations-connect-capital-knit.trycloudflare.com/auth/callback", "https://vacations-connect-capital-knit.trycloudflare.com/auth/shopify/callback", "https://vacations-connect-capital-knit.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://marco-fonts-childrens-uses.trycloudflare.com/auth/callback", "https://marco-fonts-childrens-uses.trycloudflare.com/auth/shopify/callback", "https://marco-fonts-childrens-uses.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false
+
+[[extensions]]
+type = "theme_app_extension"
+name = "Gallery Blocks"
+handle = "gallery-blocks"
+description = "Adds gallery functionality to your store"
+[[extensions.block]]
+name = "content_gallery"
+type = "dynamic"
+template = "blocks/content-gallery.liquid"
+[[extensions.block]]
+name = "app_gallery"
+type = "dynamic"
+template = "blocks/app-gallery.liquid"

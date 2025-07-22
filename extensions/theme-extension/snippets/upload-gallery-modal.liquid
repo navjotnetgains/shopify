@@ -24,8 +24,7 @@
       padding: 40px 30px 30px 30px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     ">
-
-      <!-- ✅ Close X button in top-right corner -->
+      <!-- Close X button -->
       <button id="close-upload-gallery-modal" type="button" style="
         position: absolute;
         top: 10px;
@@ -53,7 +52,24 @@
             <input type="hidden" name="email" id="upload-customer-email" />
 
             <div class="Polaris-FormLayout" style="display: flex; flex-direction: column; gap: 15px;">
-              
+
+              <!-- Type Dropdown -->
+              <div class="Polaris-FormLayout__Item">
+                <select
+                  id="upload-type"
+                  required
+                  class="Polaris-Select"
+                  style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px;"
+                >
+                  <option value="">Select Type</option>
+                  <option value="product">Product</option>
+                  <option value="article">Blog</option>
+                  <option value="page">Page</option>
+                   <option value="collection">Collection</option>
+                </select>
+              </div>
+
+              <!-- Event Dropdown -->
               <div class="Polaris-FormLayout__Item">
                 <select
                   name="eventId"
@@ -63,10 +79,10 @@
                   style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px;"
                 >
                   <option value="">Select Event</option>
-                 
                 </select>
               </div>
 
+              <!-- File Upload -->
               <div class="Polaris-FormLayout__Item">
                 <input
                   type="file"
@@ -79,6 +95,7 @@
                 />
               </div>
 
+              <!-- Submit Button -->
               <div class="Polaris-FormLayout__Item">
                 <button
                   type="submit"
@@ -89,6 +106,7 @@
                 </button>
               </div>
 
+              <!-- Success/Error Message -->
               <p id="upload-gallery-message" class="Polaris-Text--success Polaris-Text--center" style="margin-top: 10px;"></p>
             </div>
           </form>
